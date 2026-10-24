@@ -502,14 +502,14 @@
   } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
   // 1. CONFIGURACIÓN DE FIREBASE
-  const firebaseConfig = {
-    apiKey: "AIzaSyDAU2V2ym07lqWs_Eu6bvTAUZhaa6QOkks",
-    authDomain: "finanzas-admin-74216.firebaseapp.com",
-    projectId: "finanzas-admin-74216",
-    storageBucket: "finanzas-admin-74216.firebasestorage.app",
-    messagingSenderId: "175832735845",
-    appId: "1:175832735845:web:caf3836d519f1131a8268c"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDA0U2Vym07lqWs_Eu6bvTAUZhaa6QOkks",
+  authDomain: "finanzas-admin-74216.firebaseapp.com",
+  projectId: "finanzas-admin-74216",
+  storageBucket: "finanzas-admin-74216.firebasestorage.app",
+  messagingSenderId: "175832735845",
+  appId: "1:175832735845:web:caf3836d519f1131a8268c"
+};
 
   let app, auth, db;
   let firebaseReady = false;
@@ -813,7 +813,21 @@
       closeModals();
       showToast("Sesión iniciada.");
     } catch (error) {
-      showToast(authError(error.code));
+       console.error("Error de Firebase Auth:", error.code, error.message);
+
+  const messages = {
+    "auth/invalid-email": "El correo no tiene un formato válido.",
+    "auth/invalid-credential": "El correo o la contraseña son incorrectos.",
+    "auth/user-not-found": "No existe una cuenta con ese correo.",
+    "auth/wrong-password": "La contraseña es incorrecta.",
+    "auth/operation-not-allowed": "Activa Correo electrónico/Contraseña en Firebase.",
+    "auth/unauthorized-domain": "Autoriza localhost en Firebase Authentication.",
+    "auth/invalid-api-key": "La API Key de Firebase no es válida.",
+    "auth/network-request-failed": "Error de conexión. Comprueba tu internet.",
+    "auth/too-many-requests": "Demasiados intentos. Prueba más tarde."
+  };
+
+  showToast(messages[error.code] || `${error.code || "Error"}: ${error.message}`);
     }
   });
 
