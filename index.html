@@ -1,0 +1,1268 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f7f7">
+  <title>Forma — Mi entrenamiento</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f7f7f7;
+      color: #171717;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .card {
+      background: white;
+      border-radius: 25px;
+      box-shadow: 0 5px 24px rgba(0,0,0,.025);
+    }
+    .muted { color: #999; }
+    .pill {
+      background: #f0f0f0;
+      border-radius: 999px;
+      padding: 9px 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #626262;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .primary {
+      background: #171717;
+      color: white;
+      border-radius: 999px;
+      padding: 15px 18px;
+      font-weight: 650;
+      transition: transform .15s, opacity .15s;
+    }
+    .primary:active { transform: scale(.98); }
+    .secondary {
+      background: #f0f0f0;
+      border-radius: 999px;
+      padding: 11px 15px;
+      font-weight: 600;
+    }
+    .set-button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid #e6e6e6;
+      border-radius: 13px;
+      background: #f7f7f7;
+      font-size: 13px;
+      font-weight: 700;
+      color: #777;
+    }
+    .set-button.done {
+      background: #171717;
+      color: white;
+      border-color: #171717;
+    }
+    .nav-button {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 4px;
+      border-radius: 22px;
+      color: #999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 650;
+    }
+    .nav-button.active {
+      background: #171717;
+      color: white;
+    }
+    .nav-button svg { width: 21px; height: 21px; }
+    .progress-track {
+      height: 7px;
+      background: #ededed;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #171717;
+      border-radius: 20px;
+      transition: width .25s;
+    }
+    .exercise-row { border-bottom: 1px solid #f0f0f0; }
+    .exercise-row:last-child { border-bottom: none; }
+    .small-label {
+      color: #999;
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .chart-bar {
+      flex: 1;
+      min-width: 0;
+      background: #e7e7e7;
+      border-radius: 8px 8px 3px 3px;
+      position: relative;
+    }
+    .chart-bar.today { background: #171717; }
+    .chart-bar .bar-number {
+      position: absolute;
+      bottom: calc(100% + 5px);
+      width: 100%;
+      text-align: center;
+      font-size: 10px;
+      color: #777;
+    }
+    .day-dot {
+      width: 100%;
+      aspect-ratio: 1.4;
+      border-radius: 999px;
+      background: #ededed;
+    }
+    .day-dot.active { background: #171717; }
+    .day-dot.current { outline: 2px solid #2878db; outline-offset: 2px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 50;
+      padding: 12px;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      width: 100%;
+      max-width: 480px;
+      background: white;
+      border-radius: 28px;
+      padding: 25px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .field {
+      width: 100%;
+      padding: 13px 15px;
+      border: 1px solid #e7e7e7;
+      border-radius: 13px;
+      outline: none;
+      background: #fafafa;
+    }
+    .field:focus { border-color: #999; }
+    .toast {
+      position: fixed;
+      bottom: 95px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #171717;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      z-index: 100;
+      white-space: nowrap;
+      display: none;
+    }
+    @media (min-width: 700px) {
+      .app-shell { max-width: 1080px; margin: auto; }
+      .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+      .modal-backdrop { align-items: center; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="app-shell min-h-screen px-4 pb-28 pt-5 sm:px-7">
+
+  <!-- CABECERA -->
+  <header class="mb-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white">
+        <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M6 8v8M3 10v4M18 8v8M21 10v4M6 12h12"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-lg font-black tracking-tight">forma<span class="text-gray-400">.</span></div>
+        <div class="text-xs muted">Tu progreso, día a día</div>
+      </div>
+    </div>
+    <button id="accountButton" class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-bold shadow-sm" aria-label="Cuenta">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21a8 8 0 0 1 16 0"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- ESTADO DE CONEXIÓN -->
+  <div id="connectionStatus" class="mb-4 hidden text-xs muted"></div>
+
+  <!-- PÁGINA: INICIO -->
+  <main id="homeTab" class="tab-content active">
+    <div class="card mb-5 p-6 sm:p-8">
+      <div class="mb-5 flex items-center justify-between">
+        <span class="text-sm muted" id="todayLabel">Hoy</span>
+        <span id="workoutStatus" class="rounded-full bg-gray-100 px-3 py-2 text-xs font-bold text-gray-500">
+          ○ Pendiente
+        </span>
+      </div>
+
+      <div class="mb-1 text-4xl font-black tracking-tight sm:text-5xl" id="heroTitle">Tu entrenamiento</div>
+      <p class="mb-5 mt-3 text-sm muted" id="heroDescription">Un paso a la vez.</p>
+
+      <div class="mb-6 flex flex-wrap gap-2">
+        <span class="pill">▤ <span id="heroSets">0 series</span></span>
+        <span class="pill">◷ <span id="heroDuration">0 min</span></span>
+      </div>
+
+      <button id="startWorkoutButton" class="primary w-full">
+        <span id="startWorkoutText">▶ &nbsp; Comenzar entrenamiento</span>
+      </button>
+      <button id="chooseWorkoutButton" class="mt-3 w-full text-sm font-semibold text-gray-500">
+        Ver otros entrenamientos
+      </button>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="mb-5 grid grid-cols-3 gap-3">
+      <div class="card px-2 py-5 text-center sm:px-4">
+        <div class="mb-3 text-gray-400">◷</div>
+        <div id="statHours" class="text-2xl font-black sm:text-3xl">0.0</div>
+        <div class="mt-1 text-xs font-semibold text-gray-500">horas</div>
+      </div>
+      <div class="card px-2 py-5 text-center sm:px-4">
+        <div class="mb-3 text-gray-400">▤</div>
+        <div id="statSets" class="text-2xl font-black sm:text-3xl">0</div>
+        <div class="mt-1 text-xs font-semibold text-gray-500">series</div>
+      </div>
+      <div class="card px-2 py-5 text-center sm:px-4">
+        <div class="mb-3 text-gray-400">♜</div>
+        <div id="statWorkouts" class="text-2xl font-black sm:text-3xl">0</div>
+        <div class="mt-1 text-xs font-semibold text-gray-500">sesiones</div>
+      </div>
+    </div>
+
+    <!-- ACTIVIDAD 30 DÍAS -->
+    <section class="card mb-5 p-5 sm:p-6">
+      <div class="mb-4 flex items-center justify-between gap-2">
+        <div>
+          <h2 class="font-bold">Actividad</h2>
+          <p class="mt-1 text-xs muted">Últimos 30 días</p>
+        </div>
+        <span class="text-xs muted"><span id="activeDays">0</span> días activos</span>
+      </div>
+      <div id="activityGrid" class="grid grid-cols-10 gap-2"></div>
+      <div class="mt-3 flex items-center justify-between text-xs muted">
+        <span>Menos</span>
+        <div class="flex gap-1">
+          <span class="h-3 w-3 rounded-full bg-gray-100"></span>
+          <span class="h-3 w-3 rounded-full bg-gray-300"></span>
+          <span class="h-3 w-3 rounded-full bg-black"></span>
+        </div>
+        <span>Más</span>
+      </div>
+    </section>
+
+    <div class="dashboard-grid">
+      <!-- TENDENCIA -->
+      <section class="card mb-5 p-5 sm:mb-0">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h2 class="font-bold">Volumen</h2>
+            <p class="text-xs muted">Últimos 7 días</p>
+          </div>
+          <span class="text-gray-400">↗</span>
+        </div>
+        <div class="mb-3 flex items-baseline gap-2">
+          <span id="volumeStat" class="text-3xl font-black">0</span>
+          <span class="text-xs muted">repeticiones</span>
+        </div>
+        <div id="volumeChart" class="flex h-28 items-end gap-2 pt-7"></div>
+        <div id="volumeLabels" class="mt-3 flex gap-2 text-center text-xs muted"></div>
+      </section>
+
+      <!-- ESTA SEMANA -->
+      <section class="card mb-5 p-5 sm:mb-0">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h2 class="font-bold">Esta semana</h2>
+            <p class="text-xs muted">Series completadas</p>
+          </div>
+          <span class="text-gray-400">↗</span>
+        </div>
+        <div class="mb-3 flex items-baseline gap-2">
+          <span id="weeklySets" class="text-3xl font-black">0</span>
+          <span class="text-xs muted">series</span>
+        </div>
+        <div id="weeklyChart" class="flex h-28 items-end gap-2 pt-7"></div>
+        <div id="weeklyLabels" class="mt-3 flex gap-2 text-center text-xs muted"></div>
+      </section>
+    </div>
+
+    <!-- PROGRESO MUSCULAR -->
+    <section class="card mt-5 p-5 sm:p-6">
+      <div class="mb-5 flex items-center justify-between">
+        <div>
+          <h2 class="font-bold">Progreso muscular</h2>
+          <p class="mt-1 text-xs muted">Objetivo orientativo: 15 series semanales</p>
+        </div>
+        <button class="text-sm font-semibold" data-goto="progressTab">Ver todo →</button>
+      </div>
+      <div id="musclePreview" class="space-y-5"></div>
+    </section>
+
+    <!-- PRÓXIMO ENTRENAMIENTO -->
+    <section class="card mt-5 p-5 sm:p-6">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="font-bold">Tu plan semanal</h2>
+        <span class="text-xs muted">4 días</span>
+      </div>
+      <div id="homeWorkoutList" class="space-y-3"></div>
+    </section>
+
+    <p class="py-7 text-center text-xs muted">La constancia se construye una serie a la vez.</p>
+  </main>
+
+  <!-- PÁGINA: ENTRENAMIENTO -->
+  <section id="workoutTab" class="tab-content">
+    <button class="mb-5 text-sm font-semibold text-gray-500" data-goto="homeTab">← Volver al inicio</button>
+
+    <div class="card mb-5 p-6">
+      <div class="mb-3 flex items-center justify-between">
+        <span class="small-label" id="workoutDayLabel">DÍA 1</span>
+        <span id="workoutProgressLabel" class="text-xs muted">0 / 0 series</span>
+      </div>
+      <h1 id="workoutTitle" class="text-3xl font-black tracking-tight">Tren superior A</h1>
+      <p id="workoutDescription" class="mt-2 text-sm muted"></p>
+      <div class="progress-track mt-5">
+        <div id="workoutProgressBar" class="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <span id="workoutProgressText" class="text-sm font-semibold">0% completado</span>
+        <button id="resetWorkoutButton" class="text-xs font-semibold text-gray-500">Reiniciar</button>
+      </div>
+    </div>
+
+    <!-- TEMPORIZADOR -->
+    <div class="card mb-5 flex items-center justify-between gap-4 p-5">
+      <div>
+        <div class="small-label">Descanso</div>
+        <div id="timerDisplay" class="mt-1 text-3xl font-black tabular-nums">01:30</div>
+        <p id="timerHint" class="mt-1 text-xs muted">Se inicia al completar una serie.</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="timerToggle" class="primary px-5">▶</button>
+        <button id="timerReset" class="secondary">↺</button>
+      </div>
+    </div>
+
+    <div id="exerciseList" class="space-y-4"></div>
+
+    <button id="finishWorkoutButton" class="primary mt-5 w-full">Finalizar entrenamiento ✓</button>
+  </section>
+
+  <!-- PÁGINA: PROGRESO -->
+  <section id="progressTab" class="tab-content">
+    <div class="mb-5">
+      <p class="small-label">TUS RESULTADOS</p>
+      <h1 class="mt-2 text-3xl font-black tracking-tight">Progreso</h1>
+      <p class="mt-2 text-sm muted">Cada serie cuenta. Sigue construyendo.</p>
+    </div>
+
+    <div class="mb-5 grid grid-cols-2 gap-3">
+      <div class="card p-5">
+        <p class="text-xs muted">Series esta semana</p>
+        <div id="progressTotalSets" class="mt-2 text-3xl font-black">0</div>
+      </div>
+      <div class="card p-5">
+        <p class="text-xs muted">Entrenamientos</p>
+        <div id="progressTotalWorkouts" class="mt-2 text-3xl font-black">0</div>
+      </div>
+    </div>
+
+    <div class="card mb-5 p-5 sm:p-6">
+      <div class="mb-5">
+        <h2 class="font-bold">Series por grupo muscular</h2>
+        <p class="mt-1 text-xs muted">Cuenta las series directas que registres</p>
+      </div>
+      <div id="muscleProgressList" class="space-y-6"></div>
+    </div>
+
+    <div class="card p-5 sm:p-6">
+      <h2 class="mb-4 font-bold">Historial reciente</h2>
+      <div id="historyList" class="space-y-4"></div>
+    </div>
+  </section>
+
+  <!-- PÁGINA: PLAN -->
+  <section id="planTab" class="tab-content">
+    <div class="mb-5">
+      <p class="small-label">TU RUTINA</p>
+      <h1 class="mt-2 text-3xl font-black tracking-tight">Plan semanal</h1>
+      <p class="mt-2 text-sm muted">Dos días de torso y dos de piernas.</p>
+    </div>
+    <div class="card mb-5 p-5">
+      <p class="mb-3 text-sm font-bold">Distribución recomendada</p>
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between"><span>Lunes</span><span class="font-semibold">Tren superior A</span></div>
+        <div class="flex justify-between"><span>Martes</span><span class="font-semibold">Piernas A</span></div>
+        <div class="flex justify-between"><span>Miércoles</span><span class="muted">Descanso</span></div>
+        <div class="flex justify-between"><span>Jueves</span><span class="font-semibold">Tren superior B</span></div>
+        <div class="flex justify-between"><span>Viernes</span><span class="font-semibold">Piernas B</span></div>
+        <div class="flex justify-between"><span>Sábado</span><span class="muted">Descanso o caminata</span></div>
+        <div class="flex justify-between"><span>Domingo</span><span class="muted">Descanso</span></div>
+      </div>
+    </div>
+    <div id="planWorkoutList" class="space-y-4"></div>
+  </section>
+</div>
+
+<!-- NAVEGACIÓN INFERIOR -->
+<nav class="fixed bottom-3 left-1/2 z-40 flex w-[calc(100%-24px)] max-w-md -translate-x-1/2 gap-1 rounded-full border border-gray-100 bg-white/95 p-2 shadow-lg backdrop-blur">
+  <button class="nav-button active" data-tab="homeTab">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+    Inicio
+  </button>
+  <button class="nav-button" data-tab="workoutTab">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8v8M3 10v4M18 8v8M21 10v4M6 12h12"/></svg>
+    Entrenar
+  </button>
+  <button class="nav-button" data-tab="progressTab">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h17"/><path d="m7 15 4-4 3 2 6-7"/></svg>
+    Progreso
+  </button>
+  <button class="nav-button" data-tab="planTab">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 9h18M8 13h3M8 17h6"/></svg>
+    Plan
+  </button>
+</nav>
+
+<!-- MODAL DE CUENTA -->
+<div id="accountModal" class="modal-backdrop">
+  <div class="modal">
+    <div class="mb-5 flex items-center justify-between">
+      <h2 class="text-xl font-black">Tu cuenta</h2>
+      <button class="closeModal text-2xl text-gray-400">×</button>
+    </div>
+    <div id="accountInfo" class="mb-5 text-sm muted">Sin iniciar sesión. Tus datos se guardarán en este dispositivo.</div>
+    <div id="authFields" class="space-y-3">
+      <input id="emailInput" type="email" autocomplete="email" placeholder="Correo electrónico" class="field">
+      <input id="passwordInput" type="password" autocomplete="current-password" placeholder="Contraseña" class="field">
+      <button id="loginButton" class="primary w-full">Iniciar sesión</button>
+      <button id="registerButton" class="secondary w-full">Crear cuenta</button>
+    </div>
+    <button id="logoutButton" class="secondary mt-3 hidden w-full">Cerrar sesión</button>
+    <p class="mt-4 text-xs leading-5 muted">Al iniciar sesión, los registros se sincronizan con Firebase Firestore. Sin sesión, se conservan en el almacenamiento local de este navegador.</p>
+  </div>
+</div>
+
+<!-- MODAL DE SELECCIÓN DE ENTRENAMIENTO -->
+<div id="chooseModal" class="modal-backdrop">
+  <div class="modal">
+    <div class="mb-5 flex items-center justify-between">
+      <h2 class="text-xl font-black">Elegir entrenamiento</h2>
+      <button class="closeModal text-2xl text-gray-400">×</button>
+    </div>
+    <div id="chooseWorkoutList" class="space-y-3"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+    signInWithEmailAndPassword, signOut
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, setDoc, getDocs,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+  // 1. CONFIGURACIÓN DE FIREBASE
+  const firebaseConfig = {
+    apiKey: "AIzaSyDAU2V2ym07lqWs_Eu6bvTAUZhaa6QOkks",
+    authDomain: "finanzas-admin-74216.firebaseapp.com",
+    projectId: "finanzas-admin-74216",
+    storageBucket: "finanzas-admin-74216.firebasestorage.app",
+    messagingSenderId: "175832735845",
+    appId: "1:175832735845:web:caf3836d519f1131a8268c"
+  };
+
+  let app, auth, db;
+  let firebaseReady = false;
+  let currentUser = null;
+
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    firebaseReady = true;
+  } catch (error) {
+    console.warn("Firebase no está disponible:", error);
+  }
+
+  // 2. RUTINA
+  const workouts = [
+    {
+      id: "upperA",
+      label: "Día 1",
+      title: "Tren superior A",
+      description: "Pecho, espalda, hombros y brazos",
+      duration: 60,
+      exercises: [
+        { name: "Press de banca con barra", muscle: "pecho", sets: 3, reps: "6–10", rest: 120 },
+        { name: "Jalón al pecho en polea", muscle: "espalda", sets: 3, reps: "8–12", rest: 90 },
+        { name: "Press inclinado con mancuernas", muscle: "pecho", sets: 3, reps: "8–12", rest: 90 },
+        { name: "Remo sentado en polea", muscle: "espalda", sets: 3, reps: "8–12", rest: 90 },
+        { name: "Elevaciones laterales", muscle: "hombros", sets: 3, reps: "12–15", rest: 60 },
+        { name: "Curl de bíceps", muscle: "bíceps", sets: 3, reps: "10–15", rest: 60 },
+        { name: "Extensión de tríceps en polea", muscle: "tríceps", sets: 3, reps: "10–15", rest: 60 }
+      ]
+    },
+    {
+      id: "lowerA",
+      label: "Día 2",
+      title: "Piernas y glúteos A",
+      description: "Cuádriceps, glúteos, isquios y pantorrillas",
+      duration: 65,
+      exercises: [
+        { name: "Sentadilla hack", muscle: "cuádriceps", sets: 3, reps: "8–12", rest: 120 },
+        { name: "Prensa de piernas", muscle: "cuádriceps", sets: 3, reps: "10–12", rest: 120 },
+        { name: "Hip thrust con barra", muscle: "glúteos", sets: 4, reps: "8–12", rest: 120 },
+        { name: "Peso muerto rumano", muscle: "isquios", sets: 3, reps: "8–12", rest: 120 },
+        { name: "Curl femoral sentado", muscle: "isquios", sets: 3, reps: "10–15", rest: 90 },
+        { name: "Pantorrillas de pie en máquina", muscle: "pantorrillas", sets: 3, reps: "12–20", rest: 60 },
+        { name: "Crunch en polea", muscle: "abdomen", sets: 3, reps: "12–15", rest: 60 }
+      ]
+    },
+    {
+      id: "upperB",
+      label: "Día 3",
+      title: "Tren superior B",
+      description: "Segundo entrenamiento de torso",
+      duration: 60,
+      exercises: [
+        { name: "Press de pecho en máquina", muscle: "pecho", sets: 3, reps: "8–12", rest: 90 },
+        { name: "Remo con pecho apoyado", muscle: "espalda", sets: 3, reps: "8–12", rest: 90 },
+        { name: "Aperturas en peck-deck", muscle: "pecho", sets: 3, reps: "12–15", rest: 60 },
+        { name: "Jalón al pecho con agarre neutro", muscle: "espalda", sets: 3, reps: "8–12", rest: 90 },
+        { name: "Press de hombros en máquina", muscle: "hombros", sets: 3, reps: "8–12", rest: 90 },
+        { name: "Pájaros en peck-deck", muscle: "hombros", sets: 3, reps: "12–15", rest: 60 },
+        { name: "Curl predicador", muscle: "bíceps", sets: 3, reps: "10–15", rest: 60 },
+        { name: "Extensión de tríceps sobre la cabeza", muscle: "tríceps", sets: 3, reps: "10–15", rest: 60 }
+      ]
+    },
+    {
+      id: "lowerB",
+      label: "Día 4",
+      title: "Piernas y glúteos B",
+      description: "Segundo entrenamiento de piernas",
+      duration: 65,
+      exercises: [
+        { name: "Prensa de piernas", muscle: "cuádriceps", sets: 3, reps: "8–12", rest: 120 },
+        { name: "Extensión de cuádriceps", muscle: "cuádriceps", sets: 3, reps: "10–15", rest: 75 },
+        { name: "Hip thrust", muscle: "glúteos", sets: 3, reps: "8–12", rest: 120 },
+        { name: "Patada de glúteo en polea", muscle: "glúteos", sets: 3, reps: "12–15", rest: 60 },
+        { name: "Curl femoral tumbado", muscle: "isquios", sets: 3, reps: "10–15", rest: 90 },
+        { name: "Pantorrillas sentado en máquina", muscle: "pantorrillas", sets: 3, reps: "12–20", rest: 60 },
+        { name: "Elevaciones de rodillas", muscle: "abdomen", sets: 3, reps: "10–15", rest: 60 }
+      ]
+    }
+  ];
+
+  const muscleNames = [
+    "pecho", "espalda", "hombros", "bíceps", "tríceps",
+    "cuádriceps", "glúteos", "isquios", "pantorrillas", "abdomen"
+  ];
+
+  const $ = id => document.getElementById(id);
+  const localKey = "forma_workout_v1";
+  const today = () => new Date().toLocaleDateString("en-CA");
+  const dateOffset = (days) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toLocaleDateString("en-CA");
+  };
+  const weekStart = (dateString = today()) => {
+    const d = new Date(dateString + "T12:00:00");
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day);
+    return d.toLocaleDateString("en-CA");
+  };
+  const esc = value => String(value).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
+
+  let data = loadLocal();
+  let selectedWorkout = workouts[0].id;
+  let activeWorkoutDate = today();
+  let timerSeconds = 90;
+  let timerRemaining = 90;
+  let timerInterval = null;
+  let workoutStartTime = null;
+  let timerRunning = false;
+
+  function loadLocal() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(localKey) || "{}");
+      return {
+        sets: Array.isArray(saved.sets) ? saved.sets : [],
+        sessions: Array.isArray(saved.sessions) ? saved.sessions : [],
+        active: saved.active && typeof saved.active === "object" ? saved.active : {}
+      };
+    } catch {
+      return { sets: [], sessions: [], active: {} };
+    }
+  }
+
+  function saveLocal() {
+    localStorage.setItem(localKey, JSON.stringify(data));
+  }
+
+  function activeKey() {
+    return activeWorkoutDate + "_" + selectedWorkout;
+  }
+
+  function currentWorkout() {
+    return workouts.find(w => w.id === selectedWorkout) || workouts[0];
+  }
+
+  function getActiveState() {
+    const key = activeKey();
+    if (!data.active[key]) data.active[key] = { completed: [], started: false };
+    return data.active[key];
+  }
+
+  function getSetId(date, workoutId, exerciseIndex, setIndex) {
+    return `${date}_${workoutId}_${exerciseIndex}_${setIndex}`;
+  }
+
+  function isSetDone(date, workoutId, exerciseIndex, setIndex) {
+    return data.sets.some(s =>
+      s.id === getSetId(date, workoutId, exerciseIndex, setIndex)
+    );
+  }
+
+  function completedCount(workout = currentWorkout(), date = activeWorkoutDate) {
+    return workout.exercises.reduce((total, exercise, ei) => {
+      for (let si = 0; si < exercise.sets; si++) {
+        if (isSetDone(date, workout.id, ei, si)) total++;
+      }
+      return total;
+    }, 0);
+  }
+
+  function totalSets(workout) {
+    return workout.exercises.reduce((sum, exercise) => sum + exercise.sets, 0);
+  }
+
+  function setsThisWeek() {
+    const start = weekStart();
+    return data.sets.filter(s => s.date >= start && s.date <= today());
+  }
+
+  function sessionsThisWeek() {
+    const start = weekStart();
+    return data.sessions.filter(s => s.date >= start && s.date <= today());
+  }
+
+  function getMuscleCounts() {
+    const counts = Object.fromEntries(muscleNames.map(m => [m, 0]));
+    for (const set of setsThisWeek()) {
+      if (counts[set.muscle] !== undefined) counts[set.muscle]++;
+    }
+    return counts;
+  }
+
+  function showToast(message) {
+    $("toast").textContent = message;
+    $("toast").style.display = "block";
+    clearTimeout(showToast.timeout);
+    showToast.timeout = setTimeout(() => $("toast").style.display = "none", 2300);
+  }
+
+  function switchTab(id) {
+    document.querySelectorAll(".tab-content").forEach(el =>
+      el.classList.toggle("active", el.id === id)
+    );
+    document.querySelectorAll(".nav-button").forEach(el =>
+      el.classList.toggle("active", el.dataset.tab === id)
+    );
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (id === "workoutTab") renderWorkout();
+    if (id === "progressTab") renderProgress();
+    if (id === "planTab") renderPlan();
+  }
+
+  document.querySelectorAll("[data-tab]").forEach(button => {
+    button.addEventListener("click", () => switchTab(button.dataset.tab));
+  });
+  document.querySelectorAll("[data-goto]").forEach(button => {
+    button.addEventListener("click", () => switchTab(button.dataset.goto));
+  });
+
+  function openModal(id) { $(id).classList.add("show"); }
+  function closeModals() {
+    document.querySelectorAll(".modal-backdrop").forEach(el => el.classList.remove("show"));
+  }
+  document.querySelectorAll(".closeModal").forEach(button =>
+    button.addEventListener("click", closeModals)
+  );
+  document.querySelectorAll(".modal-backdrop").forEach(backdrop => {
+    backdrop.addEventListener("click", e => {
+      if (e.target === backdrop) closeModals();
+    });
+  });
+
+  $("accountButton").addEventListener("click", () => {
+    updateAccountUI();
+    openModal("accountModal");
+  });
+  $("chooseWorkoutButton").addEventListener("click", () => {
+    renderChooseList();
+    openModal("chooseModal");
+  });
+
+  // 3. FIRESTORE: un documento por usuario para el estado completo.
+  // Para esta aplicación personal, sincronizamos el estado en un documento.
+  async function cloudSave() {
+    saveLocal();
+    if (!currentUser || !db) return;
+    try {
+      await setDoc(
+        doc(db, "users", currentUser.uid, "appData", "workouts"),
+        { sets: data.sets, sessions: data.sessions, active: data.active, updatedAt: serverTimestamp() }
+      );
+      $("connectionStatus").textContent = "● Sincronizado con tu cuenta";
+      $("connectionStatus").classList.remove("hidden");
+    } catch (error) {
+      console.error(error);
+      $("connectionStatus").textContent = "No se pudo sincronizar. Revisa las reglas de Firestore.";
+      $("connectionStatus").classList.remove("hidden");
+    }
+  }
+
+  async function cloudLoad(user) {
+    if (!db || !user) return;
+    try {
+      const { getDoc } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js");
+      const snapshot = await getDoc(doc(db, "users", user.uid, "appData", "workouts"));
+      if (snapshot.exists()) {
+        const remote = snapshot.data();
+        // Fusiona por ID para evitar duplicados y no perder datos locales.
+        const mergeById = (a, b) => {
+          const map = new Map();
+          [...(a || []), ...(b || [])].forEach(item => map.set(item.id, item));
+          return [...map.values()];
+        };
+        data.sets = mergeById(data.sets, remote.sets);
+        data.sessions = mergeById(data.sessions, remote.sessions);
+        data.active = { ...(remote.active || {}), ...data.active };
+        saveLocal();
+      }
+      renderAll();
+      $("connectionStatus").textContent = "● Conectado a Firebase";
+      $("connectionStatus").classList.remove("hidden");
+    } catch (error) {
+      console.error(error);
+      $("connectionStatus").textContent = "No se pudo leer Firestore. Verifica las reglas.";
+      $("connectionStatus").classList.remove("hidden");
+    }
+  }
+
+  if (firebaseReady) {
+    onAuthStateChanged(auth, async user => {
+      currentUser = user;
+      updateAccountUI();
+      if (user) await cloudLoad(user);
+      renderAll();
+    });
+  }
+
+  // 4. AUTENTICACIÓN
+  $("loginButton").addEventListener("click", async () => {
+    if (!auth) return showToast("Firebase no está configurado correctamente.");
+    const email = $("emailInput").value.trim();
+    const password = $("passwordInput").value;
+    if (!email || !password) return showToast("Introduce tu correo y contraseña.");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      closeModals();
+      showToast("Sesión iniciada.");
+    } catch (error) {
+      showToast(authError(error.code));
+    }
+  });
+
+  $("registerButton").addEventListener("click", async () => {
+    if (!auth) return showToast("Firebase no está configurado correctamente.");
+    const email = $("emailInput").value.trim();
+    const password = $("passwordInput").value;
+    if (!email || !password) return showToast("Completa correo y contraseña.");
+    if (password.length < 6) return showToast("Usa al menos 6 caracteres.");
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      closeModals();
+      showToast("Cuenta creada.");
+    } catch (error) {
+      showToast(authError(error.code));
+    }
+  });
+
+  $("logoutButton").addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      closeModals();
+      showToast("Sesión cerrada.");
+    } catch {
+      showToast("No se pudo cerrar la sesión.");
+    }
+  });
+
+  function authError(code) {
+    const errors = {
+      "auth/invalid-email": "El correo no es válido.",
+      "auth/invalid-credential": "Correo o contraseña incorrectos.",
+      "auth/email-already-in-use": "Ese correo ya tiene una cuenta.",
+      "auth/weak-password": "La contraseña es demasiado débil.",
+      "auth/network-request-failed": "Problema de conexión.",
+      "auth/too-many-requests": "Demasiados intentos. Intenta más tarde."
+    };
+    return errors[code] || "No se pudo completar la operación.";
+  }
+
+  function updateAccountUI() {
+    $("accountInfo").textContent = currentUser
+      ? `Sesión iniciada: ${currentUser.email}`
+      : "Sin iniciar sesión. Tus datos se guardan en este navegador.";
+    $("authFields").classList.toggle("hidden", !!currentUser);
+    $("logoutButton").classList.toggle("hidden", !currentUser);
+  }
+
+  // 5. RENDERIZADO DEL ENTRENAMIENTO
+  function renderWorkout() {
+    const workout = currentWorkout();
+    const state = getActiveState();
+    const done = completedCount(workout);
+    const total = totalSets(workout);
+    const percent = total ? Math.round(done / total * 100) : 0;
+
+    $("workoutDayLabel").textContent = workout.label.toUpperCase();
+    $("workoutTitle").textContent = workout.title;
+    $("workoutDescription").textContent = workout.description;
+    $("workoutProgressLabel").textContent = `${done} / ${total} series`;
+    $("workoutProgressText").textContent = `${percent}% completado`;
+    $("workoutProgressBar").style.width = percent + "%";
+
+    $("exerciseList").innerHTML = workout.exercises.map((exercise, ei) => {
+      const finished = Array.from({ length: exercise.sets }, (_, si) =>
+        isSetDone(activeWorkoutDate, workout.id, ei, si)
+      ).filter(Boolean).length;
+
+      return `
+        <article class="card p-5">
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <p class="small-label">${esc(exercise.muscle)}</p>
+              <h3 class="mt-2 font-bold leading-snug">${esc(exercise.name)}</h3>
+              <p class="mt-2 text-xs muted">${exercise.reps} repeticiones · Descanso ${exercise.rest}s</p>
+            </div>
+            <span class="shrink-0 rounded-full bg-gray-100 px-3 py-2 text-xs font-bold">${finished}/${exercise.sets}</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            ${Array.from({ length: exercise.sets }, (_, si) => {
+              const isDone = isSetDone(activeWorkoutDate, workout.id, ei, si);
+              return `<button class="set-button ${isDone ? "done" : ""}" data-ex="${ei}" data-set="${si}" aria-label="Serie ${si + 1}">
+                ${isDone ? "✓" : si + 1}
+              </button>`;
+            }).join("")}
+          </div>
+        </article>
+      `;
+    }).join("");
+
+    $("exerciseList").querySelectorAll("[data-ex]").forEach(button => {
+      button.addEventListener("click", () => {
+        toggleSet(
+          Number(button.dataset.ex),
+          Number(button.dataset.set)
+        );
+      });
+    });
+  }
+
+  async function toggleSet(exerciseIndex, setIndex) {
+    const workout = currentWorkout();
+    const exercise = workout.exercises[exerciseIndex];
+    const id = getSetId(activeWorkoutDate, workout.id, exerciseIndex, setIndex);
+    const existing = data.sets.findIndex(s => s.id === id);
+
+    if (existing >= 0) {
+      data.sets.splice(existing, 1);
+      await cloudSave();
+      renderAll();
+      renderWorkout();
+      return;
+    }
+
+    const set = {
+      id,
+      date: activeWorkoutDate,
+      workoutId: workout.id,
+      workoutTitle: workout.title,
+      exercise: exercise.name,
+      exerciseIndex,
+      setIndex,
+      muscle: exercise.muscle,
+      reps: Number(exercise.reps.split(/[–-]/)[0]) || 0,
+      weight: 0,
+      timestamp: Date.now()
+    };
+
+    data.sets.push(set);
+    const state = getActiveState();
+    state.started = true;
+
+    if (!workoutStartTime) workoutStartTime = Date.now();
+
+    timerSeconds = exercise.rest;
+    timerRemaining = exercise.rest;
+    startTimer();
+
+    await cloudSave();
+    renderAll();
+    renderWorkout();
+    showToast("Serie completada. Descansa.");
+  }
+
+  $("startWorkoutButton").addEventListener("click", () => {
+    const workout = workouts.find(w => w.id === selectedWorkout) || workouts[0];
+    activeWorkoutDate = today();
+    getActiveState().started = true;
+    workoutStartTime = Date.now();
+    timerSeconds = 90;
+    timerRemaining = 90;
+    renderWorkout();
+    switchTab("workoutTab");
+    cloudSave();
+  });
+
+  $("resetWorkoutButton").addEventListener("click", async () => {
+    const workout = currentWorkout();
+    const done = completedCount(workout);
+    if (done && !confirm("¿Quieres borrar las series registradas de este entrenamiento de hoy?")) return;
+
+    const ids = new Set(
+      workout.exercises.flatMap((ex, ei) =>
+        Array.from({ length: ex.sets }, (_, si) =>
+          getSetId(activeWorkoutDate, workout.id, ei, si)
+        )
+      )
+    );
+    data.sets = data.sets.filter(s => !ids.has(s.id));
+    data.active[activeKey()] = { completed: [], started: false };
+    stopTimer();
+    await cloudSave();
+    renderAll();
+    renderWorkout();
+    showToast("Entrenamiento reiniciado.");
+  });
+
+  $("finishWorkoutButton").addEventListener("click", async () => {
+    const workout = currentWorkout();
+    const count = completedCount(workout);
+    if (!count) return showToast("Registra al menos una serie primero.");
+
+    const id = `${activeWorkoutDate}_${workout.id}`;
+    const elapsed = workoutStartTime ? Math.round((Date.now() - workoutStartTime) / 60000) : workout.duration;
+    const session = {
+      id,
+      date: activeWorkoutDate,
+      workoutId: workout.id,
+      title: workout.title,
+      sets: count,
+      duration: Math.max(1, elapsed),
+      timestamp: Date.now()
+    };
+
+    const index = data.sessions.findIndex(s => s.id === id);
+    if (index >= 0) data.sessions[index] = session;
+    else data.sessions.push(session);
+
+    getActiveState().started = false;
+    stopTimer();
+    await cloudSave();
+    renderAll();
+    switchTab("homeTab");
+    showToast("¡Entrenamiento guardado!");
+  });
+
+  // 6. TEMPORIZADOR
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
+  function updateTimerDisplay() {
+    $("timerDisplay").textContent = formatTime(timerRemaining);
+    $("timerToggle").textContent = timerRunning ? "Ⅱ" : "▶";
+    $("timerHint").textContent = timerRunning ? "Respira y prepárate." : "Se inicia al completar una serie.";
+  }
+
+  function startTimer() {
+    stopTimer();
+    timerRunning = true;
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      if (timerRemaining <= 0) {
+        timerRemaining = 0;
+        stopTimer();
+        updateTimerDisplay();
+        showToast("¡Descanso terminado!");
+        if ("vibrate" in navigator) navigator.vibrate([150, 80, 150]);
+        return;
+      }
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    timerRunning = false;
+    updateTimerDisplay();
+  }
+
+  $("timerToggle").addEventListener("click", () => {
+    if (timerRunning) stopTimer();
+    else startTimer();
+  });
+  $("timerReset").addEventListener("click", () => {
+    stopTimer();
+    timerRemaining = timerSeconds;
+    updateTimerDisplay();
+  });
+
+  // 7. SELECTOR DE RUTINAS
+  function renderChooseList() {
+    $("chooseWorkoutList").innerHTML = workouts.map(workout => `
+      <button class="w-full rounded-2xl border border-gray-100 p-4 text-left transition hover:bg-gray-50" data-choose="${workout.id}">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-xs muted">${workout.label}</p>
+            <p class="mt-1 font-bold">${workout.title}</p>
+            <p class="mt-1 text-xs muted">${totalSets(workout)} series previstas</p>
+          </div>
+          <span class="text-gray-400">→</span>
+        </div>
+      </button>
+    `).join("");
+
+    $("chooseWorkoutList").querySelectorAll("[data-choose]").forEach(button => {
+      button.addEventListener("click", () => {
+        selectedWorkout = button.dataset.choose;
+        activeWorkoutDate = today();
+        workoutStartTime = null;
+        closeModals();
+        renderAll();
+        renderWorkout();
+        switchTab("workoutTab");
+      });
+    });
+  }
+
+  function renderPlan() {
+    $("planWorkoutList").innerHTML = workouts.map(workout => `
+      <button data-plan="${workout.id}" class="card w-full p-5 text-left">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="small-label">${workout.label}</p>
+            <h3 class="mt-2 font-bold">${workout.title}</h3>
+            <p class="mt-1 text-xs muted">${workout.description}</p>
+            <p class="mt-3 text-xs font-semibold">${totalSets(workout)} series · ${workout.duration} min aprox.</p>
+          </div>
+          <span class="text-gray-400">→</span>
+        </div>
+      </button>
+    `).join("");
+
+    $("planWorkoutList").querySelectorAll("[data-plan]").forEach(button => {
+      button.addEventListener("click", () => {
+        selectedWorkout = button.dataset.plan;
+        activeWorkoutDate = today();
+        renderWorkout();
+        switchTab("workoutTab");
+      });
+    });
+  }
+
+  function renderHomeWorkoutList() {
+    $("homeWorkoutList").innerHTML = workouts.map(workout => {
+      const done = completedCount(workout, today());
+      const total = totalSets(workout);
+      return `
+        <button data-home-workout="${workout.id}" class="flex w-full items-center gap-3 rounded-2xl p-2 text-left hover:bg-gray-50">
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gray-100 font-bold">${workout.label.replace("Día ", "")}</div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-sm font-bold">${workout.title}</div>
+            <div class="mt-1 text-xs muted">${done}/${total} series · ${workout.duration} min</div>
+          </div>
+          <span class="text-gray-400">→</span>
+        </button>
+      `;
+    }).join("");
+
+    $("homeWorkoutList").querySelectorAll("[data-home-workout]").forEach(button => {
+      button.addEventListener("click", () => {
+        selectedWorkout = button.dataset.homeWorkout;
+        activeWorkoutDate = today();
+        renderWorkout();
+        switchTab("workoutTab");
+      });
+    });
+  }
+
+  // 8. GRÁFICOS Y ESTADÍSTICAS
+  function renderBarChart(chartId, labelsId, values, labels) {
+    const max = Math.max(...values, 1);
+    $(chartId).innerHTML = values.map((value, i) => `
+      <div class="chart-bar ${i === values.length - 1 ? "today" : ""}" style="height:${Math.max(5, value / max * 100)}%">
+        <span class="bar-number">${value || ""}</span>
+      </div>
+    `).join("");
+    $(labelsId).innerHTML = labels.map(label =>
+      `<span class="flex-1">${label}</span>`
+    ).join("");
+  }
+
+  function renderActivity() {
+    let active = 0;
+    const html = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = dateOffset(-i);
+      const count = data.sets.filter(s => s.date === date).length;
+      if (count) active++;
+      const color = count >= 8 ? "#171717" : count >= 4 ? "#a8a8a8" : count ? "#d8d8d8" : "#ededed";
+      html.push(`<div class="day-dot ${date === today() ? "current" : ""}" title="${date}: ${count} series" style="background:${color}"></div>`);
+    }
+    $("activityGrid").innerHTML = html.join("");
+    $("activeDays").textContent = active;
+  }
+
+  function renderMuscles(containerId, counts, limit = 10) {
+    $(containerId).innerHTML = muscleNames.slice(0, limit).map(muscle => {
+      const count = counts[muscle] || 0;
+      const percent = Math.min(100, count / 15 * 100);
+      return `
+        <div>
+          <div class="mb-2 flex items-center justify-between gap-3">
+            <span class="text-sm font-semibold capitalize">${muscle}</span>
+            <span class="text-xs muted">${count} / 15 series</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderHome() {
+    const workout = workouts.find(w => w.id === selectedWorkout) || workouts[0];
+    const count = completedCount(workout, today());
+    const total = totalSets(workout);
+    const finished = count >= total;
+    const now = new Date();
+    const dayName = now.toLocaleDateString("es-DO", { weekday: "long" });
+    $("todayLabel").textContent = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    $("heroTitle").textContent = finished ? "¡Buen trabajo!" : workout.title;
+    $("heroDescription").textContent = finished
+      ? "Has completado todas las series de esta rutina."
+      : workout.description;
+    $("heroSets").textContent = `${count}/${total} series`;
+    $("heroDuration").textContent = `${workout.duration} min`;
+    $("workoutStatus").textContent = finished ? "✓ Completado" : count ? "◷ En progreso" : "○ Pendiente";
+    $("workoutStatus").className = finished
+      ? "rounded-full bg-green-50 px-3 py-2 text-xs font-bold text-green-700"
+      : "rounded-full bg-gray-100 px-3 py-2 text-xs font-bold text-gray-500";
+    $("startWorkoutText").textContent = count ? "▶  Continuar entrenamiento" : "▶  Comenzar entrenamiento";
+
+    const allSets = data.sets.filter(s => s.date <= today());
+    const sessions = data.sessions.filter(s => s.date <= today());
+    const totalMinutes = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+    $("statHours").textContent = (totalMinutes / 60).toFixed(1);
+    $("statSets").textContent = allSets.length;
+    $("statWorkouts").textContent = sessions.length;
+
+    renderActivity();
+
+    const last7 = Array.from({ length: 7 }, (_, i) => dateOffset(i - 6));
+    const dailySets = last7.map(date => data.sets.filter(s => s.date === date).length);
+    const dailyReps = last7.map(date => data.sets.filter(s => s.date === date).reduce((sum, s) => sum + (s.reps || 0), 0));
+    const labels = last7.map(date => new Date(date + "T12:00:00").toLocaleDateString("es-DO", { weekday: "narrow" }));
+    $("volumeStat").textContent = dailyReps.reduce((a, b) => a + b, 0).toLocaleString("es-DO");
+    $("weeklySets").textContent = setsThisWeek().length;
+    renderBarChart("volumeChart", "volumeLabels", dailyReps, labels);
+    renderBarChart("weeklyChart", "weeklyLabels", dailySets, labels);
+    renderMuscles("musclePreview", getMuscleCounts(), 6);
+    renderHomeWorkoutList();
+  }
+
+  function renderProgress() {
+    $("progressTotalSets").textContent = setsThisWeek().length;
+    $("progressTotalWorkouts").textContent = sessionsThisWeek().length;
+    renderMuscles("muscleProgressList", getMuscleCounts());
+
+    const history = [...data.sessions]
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+      .slice(0, 10);
+
+    $("historyList").innerHTML = history.length ? history.map(session => `
+      <div class="flex items-center gap-3">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gray-100">✓</div>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-bold">${esc(session.title)}</p>
+          <p class="mt-1 text-xs muted">${esc(session.date)} · ${session.sets} series</p>
+        </div>
+        <span class="text-xs muted">${session.duration || 0} min</span>
+      </div>
+    `).join("") : `<div class="py-6 text-center text-sm muted">Aún no hay entrenamientos finalizados.</div>`;
+  }
+
+  function renderAll() {
+    renderHome();
+    renderWorkout();
+    renderProgress();
+    renderPlan();
+  }
+
+  // Inicia la interfaz con datos locales y luego sincroniza si hay sesión.
+  updateAccountUI();
+  updateTimerDisplay();
+  renderAll();
+</script>
+</body>
+</html>
